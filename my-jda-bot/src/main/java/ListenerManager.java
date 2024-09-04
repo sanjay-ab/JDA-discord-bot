@@ -7,8 +7,16 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.util.*;
 
-public class Listener extends ListenerAdapter {
-    public static Dictionary<String, diceClass> diceListeners = new Hashtable<String, diceClass>();
+/**
+ * ListenerManager class that listens for messages and creates new DiceGameListener objects
+ */
+public class ListenerManager extends ListenerAdapter {
+    /**
+     * Dictionary that maps channel IDs to DiceGameListener objects, a channel can 
+     * only have one DiceGameListener object at a time.
+    */
+    public static Dictionary<String, DiceGameListener> diceListeners = new Hashtable<String, DiceGameListener>();
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event){
         if (event.getAuthor().isBot()) return; // so we dont respond to other bots
@@ -17,11 +25,13 @@ public class Listener extends ListenerAdapter {
         String content = message.getContentRaw();
         String authorId = message.getAuthor().getId();
         MessageChannel channel = event.getChannel();
-        JDA api = event.getJDA(); //get bot object
+        JDA api = event.getJDA();  // get bot object
 
-        if (content.toLowerCase().startsWith("!dice")){ //if keyword written then create a new listener for the channel and add it to the bot
-            if (diceListeners.get(channel.getId()) == null){ //if channel does not already have a listener then add one
-                diceListeners.put(channel.getId(),new diceClass(channel,message.getAuthor()));
+        if (content.toLowerCase().startsWith("!dice")) { 
+            // create a new listener for the channel and add it to the bot
+            if (diceListeners.get(channel.getId()) == null) {  
+                // if channel does not already have a listener then add one
+                diceListeners.put(channel.getId(), new DiceGameListener(channel, message.getAuthor()));
                 api.addEventListener(diceListeners.get(channel.getId()));
                 channel.sendMessage("Starting Liars Dice game. Type !join to join and !start to start.").queue();
             } else {
@@ -36,14 +46,13 @@ public class Listener extends ListenerAdapter {
         System.out.println("The bot is ready!");
     }
 
-    public static void removeListener(MessageChannel channel){ //method to remove listeners from channels when they are finished.
+    /**
+     * Removes the DiceGameListener from the channel
+     * @param channel the channel to remove the listener from
+     */
+    public static void removeListener(MessageChannel channel){
         JDA api = channel.getJDA();
         api.removeEventListener(diceListeners.get(channel.getId()));
         diceListeners.remove(channel.getId());
     }
-
-
-
 }
-
-
